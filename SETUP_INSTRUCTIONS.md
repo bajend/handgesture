@@ -1,78 +1,64 @@
-# MediaPipe Hand Gesture Recognition - Setup Instructions
+# Setup Instructions
 
-## Step 1: Install CocoaPods Dependencies
+## Prerequisites
 
-Run the following command in your terminal from the project directory:
+*   **Xcode 13.0+**
+*   **iOS 15.0+ Device** (Physical device required for camera features)
+*   **CocoaPods** (Install via `sudo gem install cocoapods` if you don't have it)
 
-```bash
-cd /Users/I838841/Desktop/TestProductdummy
-pod install
-```
+## Step 1: Install Dependencies
 
-After installation, **close your current Xcode project** and open the newly created `.xcworkspace` file instead:
-```bash
-open TestProductdummy.xcworkspace
-```
+1.  Open Terminal and navigate to the project directory:
+    ```bash
+    cd path/to/TestProductdummy
+    ```
 
-## Step 2: Download the Gesture Recognizer Model
+2.  Install the required pods:
+    ```bash
+    pod install
+    ```
 
-1. Download the gesture recognizer model from:
-   https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task
+3.  **Crucial Step**: Close any open Xcode windows. From now on, **always** open the workspace file, not the project file:
+    ```bash
+    open TestProductdummy.xcworkspace
+    ```
 
-2. In Xcode, drag and drop the `gesture_recognizer.task` file into your project
-3. Make sure "Copy items if needed" is checked
-4. Make sure the file is added to the TestProductdummy target
+## Step 2: Verify Project Configuration
 
-## Step 3: Update Info.plist for Camera Permission
+1.  **Signing & Capabilities**:
+    *   Select the project in the Project Navigator (blue icon).
+    *   Select the **TestProductdummy** target.
+    *   Go to the **Signing & Capabilities** tab.
+    *   Ensure a valid **Team** is selected.
+    *   Ensure the **Bundle Identifier** is unique if you are deploying to your own device.
 
-You need to add camera usage description to your Info.plist:
+2.  **Camera Permissions**:
+    *   Verify that `Privacy - Camera Usage Description` is present in the **Info** tab.
+    *   (This should already be set up, but good to double-check).
 
-1. In Xcode, select the TestProductdummy project in the Navigator
-2. Select the TestProductdummy target
-3. Go to the "Info" tab
-4. Click the "+" button to add a new key
-5. Add: **Privacy - Camera Usage Description**
-6. Set the value to: "This app requires camera access to perform hand gesture recognition"
+3.  **Model File**:
+    *   Ensure `gesture_recognizer.task` is present in the project navigator and is included in the "Copy Bundle Resources" build phase.
 
-Or you can add this directly to Info.plist file:
-```xml
-<key>NSCameraUsageDescription</key>
-<string>This app requires camera access to perform hand gesture recognition</string>
-```
+## Step 3: Build and Run
 
-## Step 4: Add Files to Xcode Project
-
-Make sure all the new Swift files are added to your Xcode project:
-- GestureRecognizerService.swift
-- CameraManager.swift
-- CameraView.swift
-- ContentView.swift (updated)
-
-If they're not visible in Xcode, drag them from Finder into your Xcode project.
-
-## Step 5: Build and Run
-
-1. Select your target device or simulator
-2. Build the project (⌘+B)
-3. Run the app (⌘+R)
-4. Grant camera permission when prompted
-5. Try making hand gestures in front of the camera!
-
-## Supported Gestures
-
-The model recognizes these gestures:
-- None
-- Closed_Fist
-- Open_Palm
-- Pointing_Up
-- Thumb_Down
-- Thumb_Up
-- Victory
-- ILoveYou
+1.  Connect your iPhone/iPad to your Mac.
+2.  Select your device from the run destination menu in Xcode.
+3.  Build and Run (**Cmd + R**).
+4.  On your device, grant camera permissions when prompted.
 
 ## Troubleshooting
 
-- If you get build errors about MediaPipeTasksVision, make sure you opened the .xcworkspace file, not the .xcodeproj
-- If camera doesn't work, check that you've added the camera permission to Info.plist
-- If the model isn't found, verify the gesture_recognizer.task file is in your project and added to the target
-- Make sure you're running on a physical device or simulator with iOS 15.0+
+*   **"No such module 'MediaPipeTasksVision'"**:
+    *   Ensure you opened `.xcworkspace` and not `.xcodeproj`.
+    *   Try running `pod install` again.
+
+*   **"Code signing failed"**:
+    *   Go to **Signing & Capabilities** and ensure "Automatically manage signing" is checked and a valid Team is selected.
+
+*   **App crashes on launch**:
+    *   Check the Xcode console for error messages.
+    *   Ensure `gesture_recognizer.task` is correctly added to the target.
+
+*   **Camera is black**:
+    *   Check if you granted camera permissions.
+    *   Verify the privacy key in `Info.plist`.
