@@ -6,8 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7D1DBA4FC179D5645352B2B0 /* Pods_TestProductdummy.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0872C4D2ED4D4D0F8BB65866 /* Pods_TestProductdummy.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		0872C4D2ED4D4D0F8BB65866 /* Pods_TestProductdummy.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TestProductdummy.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C2467BD5281C833BA38DF58 /* Pods-TestProductdummy.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TestProductdummy.release.xcconfig"; path = "Target Support Files/Pods-TestProductdummy/Pods-TestProductdummy.release.xcconfig"; sourceTree = "<group>"; };
 		7A2AD2A42EF22EF000C00A67 /* TestProductdummy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestProductdummy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		83E9DD9B64CA341E12F8EA95 /* Pods-TestProductdummy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TestProductdummy.debug.xcconfig"; path = "Target Support Files/Pods-TestProductdummy/Pods-TestProductdummy.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +30,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7D1DBA4FC179D5645352B2B0 /* Pods_TestProductdummy.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +42,8 @@
 			children = (
 				7A2AD2A62EF22EF000C00A67 /* TestProductdummy */,
 				7A2AD2A52EF22EF000C00A67 /* Products */,
+				C3EECCFD4760983742C6130A /* Pods */,
+				89911B85A26DC50BACFFCCE0 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -45,6 +55,23 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		89911B85A26DC50BACFFCCE0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0872C4D2ED4D4D0F8BB65866 /* Pods_TestProductdummy.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C3EECCFD4760983742C6130A /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				83E9DD9B64CA341E12F8EA95 /* Pods-TestProductdummy.debug.xcconfig */,
+				4C2467BD5281C833BA38DF58 /* Pods-TestProductdummy.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -52,6 +79,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7A2AD2AF2EF22EF200C00A67 /* Build configuration list for PBXNativeTarget "TestProductdummy" */;
 			buildPhases = (
+				ACE9B5162969ED91F25845A4 /* [CP] Check Pods Manifest.lock */,
 				7A2AD2A02EF22EF000C00A67 /* Sources */,
 				7A2AD2A12EF22EF000C00A67 /* Frameworks */,
 				7A2AD2A22EF22EF000C00A67 /* Resources */,
@@ -64,8 +92,6 @@
 				7A2AD2A62EF22EF000C00A67 /* TestProductdummy */,
 			);
 			name = TestProductdummy;
-			packageProductDependencies = (
-			);
 			productName = TestProductdummy;
 			productReference = 7A2AD2A42EF22EF000C00A67 /* TestProductdummy.app */;
 			productType = "com.apple.product-type.application";
@@ -113,6 +139,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		ACE9B5162969ED91F25845A4 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-TestProductdummy-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		7A2AD2A02EF22EF000C00A67 /* Sources */ = {
@@ -246,13 +297,16 @@
 		};
 		7A2AD2B02EF22EF200C00A67 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 83E9DD9B64CA341E12F8EA95 /* Pods-TestProductdummy.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZYYR83V638;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to perform hand gesture recognition";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -277,13 +331,16 @@
 		};
 		7A2AD2B12EF22EF200C00A67 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C2467BD5281C833BA38DF58 /* Pods-TestProductdummy.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZYYR83V638;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to perform hand gesture recognition";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
