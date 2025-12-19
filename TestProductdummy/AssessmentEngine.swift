@@ -117,6 +117,7 @@ class TremorAnalyzer {
     
     /// Computes the standard deviation of the wrist's X and Y coordinates within the buffer.
     /// Returns a tuple containing the standard deviation for X and Y.
+    /// Note: Lower values indicate higher stability (less tremor/movement).
     func calculateStability() -> (stdDevX: Float, stdDevY: Float) {
         guard buffer.count > 1 else { return (0.0, 0.0) }
         

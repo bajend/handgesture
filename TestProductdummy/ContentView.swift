@@ -9,12 +9,13 @@ import SwiftUI
 import AVFoundation
 import Combine
 import MediaPipeTasksVision
+import AudioToolbox
 
 struct ContentView: View {
     @StateObject private var cameraManager = CameraManager()
     @StateObject private var viewModel = GestureRecognitionViewModel()
     
-    @State private var isDeveloperMode = false
+    @State private var activePanel: String = "none" // "none", "setup", "save"
     @State private var isBlindMode = false
     @State private var showSaveAlert = false
     @State private var showSaveResultAlert = false
@@ -64,34 +65,37 @@ struct ContentView: View {
                                     
                                     Spacer()
                                     
-                                    // Random Test Button
-                                    Button(action: {
-                                        if let randomMudra = viewModel.availableMudras.randomElement() {
-                                            viewModel.loadReferenceMudra(named: randomMudra)
+                                    // Mode Selector
+                                    HStack(spacing: 0) {
+                                        Button(action: { activePanel = (activePanel == "setup" ? "none" : "setup") }) {
+                                            Text("Setup Exp.")
+                                                .font(.caption).bold()
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(activePanel == "setup" ? Color.blue : Color.gray.opacity(0.5))
+                                                .foregroundColor(.white)
                                         }
-                                    }) {
-                                        Image(systemName: "shuffle")
-                                            .foregroundColor(.white)
-                                            .padding(8)
-                                            .background(Color.purple.opacity(0.7))
-                                            .clipShape(Circle())
+                                        
+                                        Button(action: { activePanel = (activePanel == "save" ? "none" : "save") }) {
+                                            Text("Save Gesture")
+                                                .font(.caption).bold()
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(activePanel == "save" ? Color.blue : Color.gray.opacity(0.5))
+                                                .foregroundColor(.white)
+                                        }
                                     }
-                                    .disabled(viewModel.availableMudras.isEmpty)
-                                    
-                                    // Developer Mode Toggle
-                                    Toggle(isOn: $isDeveloperMode) {
-                                        Text("Dev")
-                                            .foregroundColor(.white)
-                                            .font(.caption)
-                                    }
-                                    .toggleStyle(SwitchToggleStyle(tint: .blue))
-                                    .frame(width: 80)
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
                                 }
                                 
                                 // Horizontal Mudra Selector
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 10) {
-                                        ForEach(Array(viewModel.availableMudras.enumerated()), id: \.element) { index, mudra in
+                                        ForEach(Array(viewModel.currentList.enumerated()), id: \.element) { index, mudra in
                                             Button(action: {
                                                 viewModel.loadReferenceMudra(named: mudra)
                                             }) {
@@ -105,10 +109,12 @@ struct ContentView: View {
                                                     .cornerRadius(15)
                                             }
                                             .contextMenu {
-                                                Button(role: .destructive) {
-                                                    viewModel.deleteMudra(at: IndexSet(integer: index))
-                                                } label: {
-                                                    Label("Delete", systemImage: "trash")
+                                                if viewModel.studyGroup == "Control" {
+                                                    Button(role: .destructive) {
+                                                        viewModel.deleteMudra(at: IndexSet(integer: index))
+                                                    } label: {
+                                                        Label("Delete", systemImage: "trash")
+                                                    }
                                                 }
                                             }
                                         }
@@ -176,38 +182,142 @@ struct ContentView: View {
                                 }
                             }
                             
-                            // Developer Controls
-                            if isDeveloperMode {
-                                HStack {
+                            // Recording Toggle (Visible only when no panel is active)
+                            if activePanel == "none" {
+                                VStack(spacing: 8) {
+                                    if viewModel.isRecordingSession {
+                                        Text("Data Points: \(viewModel.recordedFrames) / \(viewModel.targetFrameCount ?? 0)")
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .padding(4)
+                                            .background(Color.black.opacity(0.6))
+                                            .cornerRadius(4)
+                                    }
+                                    
+                                    HStack(spacing: 12) {
+                                        if !viewModel.isRecordingSession {
+                                            Button(action: {
+                                                viewModel.toggleRecording(isTestMode: isBlindMode, limitFrames: 100)
+                                            }) {
+                                                VStack(spacing: 2) {
+                                                    Text("100 Frames")
+                                                        .font(.headline)
+                                                    Text("Test (~3s)")
+                                                        .font(.caption)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(8)
+                                                .background(Color.orange)
+                                                .cornerRadius(8)
+                                                .foregroundColor(.white)
+                                            }
+                                            
+                                            Button(action: {
+                                                viewModel.toggleRecording(isTestMode: isBlindMode, limitFrames: 300)
+                                            }) {
+                                                VStack(spacing: 2) {
+                                                    Text("300 Frames")
+                                                        .font(.headline)
+                                                    Text("Train (~10s)")
+                                                        .font(.caption)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(8)
+                                                .background(Color.green)
+                                                .cornerRadius(8)
+                                                .foregroundColor(.white)
+                                            }
+                                        } else {
+                                            Button(action: {
+                                                viewModel.toggleRecording(isTestMode: isBlindMode)
+                                            }) {
+                                                HStack {
+                                                    Image(systemName: "stop.circle.fill")
+                                                    Text("Stop Log")
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(12)
+                                                .background(Color.red)
+                                                .cornerRadius(8)
+                                                .foregroundColor(.white)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+                            
+                            // Setup Panel
+                            if activePanel == "setup" {
+                                VStack(spacing: 12) {
+                                    Text("Experiment Setup")
+                                        .font(.headline)
+                                        .foregroundColor(.black)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Subject ID")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                        TextField("Enter Subject ID", text: $viewModel.subjectID)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Group")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                        Picker("Group", selection: $viewModel.studyGroup) {
+                                            Text("Mudra").tag("Mudra")
+                                            Text("Natural").tag("Natural")
+                                            Text("Control").tag("Control")
+                                        }
+                                        .pickerStyle(SegmentedPickerStyle())
+                                    }
+                                }
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                            }
+                            
+                            // Save Gesture Panel
+                            if activePanel == "save" {
+                                VStack(spacing: 16) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("New Reference Gesture")
+                                            .font(.headline)
+                                            .foregroundColor(.black)
+                                        
+                                        Text("1. Perform the gesture in front of the camera.\n2. Ensure the skeleton is stable.\n3. Tap 'Capture' to save.")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
                                     Button(action: {
                                         mudraName = ""
                                         showSaveAlert = true
                                     }) {
-                                        Text("Save")
-                                            .frame(maxWidth: .infinity)
-                                            .padding(8)
-                                            .background(Color.blue.opacity(0.8))
-                                            .cornerRadius(8)
-                                            .foregroundColor(.white)
+                                        HStack {
+                                            Image(systemName: "camera.shutter.button")
+                                            Text("Capture Gesture")
+                                        }
+                                        .fontWeight(.semibold)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(12)
+                                        .background(viewModel.worldLandmarks.isEmpty ? Color.gray.opacity(0.5) : Color.blue)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(10)
                                     }
                                     .disabled(viewModel.worldLandmarks.isEmpty)
-                                    
-                                    // Recording Toggle
-                                    Button(action: {
-                                        viewModel.toggleRecording()
-                                    }) {
-                                        HStack {
-                                            Image(systemName: viewModel.isRecordingSession ? "stop.circle.fill" : "record.circle")
-                                            Text(viewModel.isRecordingSession ? "Stop Log" : "Log Data")
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding(8)
-                                        .background(viewModel.isRecordingSession ? Color.red.opacity(0.8) : Color.green.opacity(0.8))
-                                        .cornerRadius(8)
-                                        .foregroundColor(.white)
-                                    }
                                 }
-                                .padding(.top, 8)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(16)
+                                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                             }
                         }
                         .padding()
@@ -220,7 +330,7 @@ struct ContentView: View {
                     VStack {
                         Spacer()
                         HStack {
-                            Text("Blind Mode Active")
+                            Text("Test Mode Active")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .padding()
@@ -230,16 +340,42 @@ struct ContentView: View {
                             Spacer()
                             
                             // Recording Toggle (Visible in Blind Mode for Control)
-                            Button(action: {
-                                viewModel.toggleRecording()
-                            }) {
-                                Image(systemName: viewModel.isRecordingSession ? "stop.circle.fill" : "record.circle")
-                                    .font(.title)
-                                    .foregroundColor(viewModel.isRecordingSession ? .red : .green)
+                            if viewModel.isRecordingSession {
+                                Button(action: {
+                                    viewModel.toggleRecording(isTestMode: isBlindMode)
+                                }) {
+                                    Image(systemName: "stop.circle.fill")
+                                        .font(.title)
+                                        .foregroundColor(.red)
+                                }
+                                .padding()
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                            } else {
+                                HStack(spacing: 20) {
+                                    Button(action: {
+                                        viewModel.toggleRecording(isTestMode: isBlindMode, limitFrames: 100)
+                                    }) {
+                                        Text("100")
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+                                            .padding(12)
+                                            .background(Color.orange)
+                                            .clipShape(Circle())
+                                    }
+                                    
+                                    Button(action: {
+                                        viewModel.toggleRecording(isTestMode: isBlindMode, limitFrames: 300)
+                                    }) {
+                                        Text("300")
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+                                            .padding(12)
+                                            .background(Color.green)
+                                            .clipShape(Circle())
+                                    }
+                                }
                             }
-                            .padding()
-                            .background(Color.black.opacity(0.5))
-                            .clipShape(Circle())
                         }
                         .padding()
                     }
@@ -249,12 +385,12 @@ struct ContentView: View {
                 VStack {
                     HStack {
                         Toggle(isOn: $isBlindMode) {
-                            Text("Blind Mode")
+                            Text("Test Mode (No Overlay)")
                                 .font(.caption)
                                 .foregroundColor(.white)
                         }
                         .toggleStyle(SwitchToggleStyle(tint: .red))
-                        .frame(width: 120)
+                        .frame(width: 180)
                         .padding(8)
                         .background(Color.black.opacity(0.5))
                         .cornerRadius(8)
@@ -357,9 +493,24 @@ class GestureRecognitionViewModel: NSObject, ObservableObject {
     @Published var accuracyScore: Float = 0.0
     @Published var stability: (x: Float, y: Float) = (0, 0)
     @Published var targetMudraName: String = "None"
+    @Published var subjectID: String = ""
+    @Published var studyGroup: String = "Control"
     @Published var currentLandmarkErrors: [Float]? = nil
     @Published var availableMudras: [String] = []
     @Published var isRecordingSession: Bool = false
+    @Published var recordedFrames: Int = 0
+    @Published var targetFrameCount: Int? = nil
+    
+    let mudraGestures = ["Pataakam", "Tripataakam", "Mayura", "Kartari_Mukham"]
+    let naturalGestures = ["Large_Diameter", "Tip_Pinch", "Power_Disk", "Lateral_Tripod"]
+    
+    var currentList: [String] {
+        switch studyGroup {
+        case "Mudra": return mudraGestures
+        case "Natural": return naturalGestures
+        default: return availableMudras
+        }
+    }
     
     var viewSize: CGSize = .zero
     weak var cameraManager: CameraManager?
@@ -377,12 +528,15 @@ class GestureRecognitionViewModel: NSObject, ObservableObject {
         listSavedMudras()
     }
     
-    func toggleRecording() {
+    func toggleRecording(isTestMode: Bool, limitFrames: Int? = nil) {
         isRecordingSession.toggle()
         if isRecordingSession {
-            sessionLogger.startNewSession()
+            self.targetFrameCount = limitFrames
+            self.recordedFrames = 0
+            sessionLogger.startNewSession(subjectID: subjectID, group: studyGroup, targetGestureName: targetMudraName, isTestMode: isTestMode, limitFrames: limitFrames)
         } else {
             sessionLogger.stopSession()
+            self.targetFrameCount = nil
         }
     }
     
@@ -531,12 +685,20 @@ extension GestureRecognitionViewModel: GestureRecognizerServiceDelegate {
                     
                     // Log data if recording
                     if self.isRecordingSession {
+                        self.recordedFrames += 1
+                        
                         self.sessionLogger.logFrame(
                             timestamp: Date().timeIntervalSince1970,
+                            targetGestureName: self.targetMudraName,
                             accuracy: self.accuracyScore,
                             stabilityX: self.stability.x,
                             stabilityY: self.stability.y
                         )
+                        
+                        if let target = self.targetFrameCount, self.recordedFrames >= target {
+                            self.toggleRecording(isTestMode: false) // Mode doesn't matter when stopping
+                            AudioServicesPlaySystemSound(1052)
+                        }
                     }
                 } else {
                     self.accuracyScore = 0.0
