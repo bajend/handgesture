@@ -123,13 +123,13 @@ extension GestureRecognizerService: GestureRecognizerLiveStreamDelegate {
         }
         
         if let result = result {
-            delegate?.gestureRecognizerService(self, didRecognizeGestures: result)
+            delegate?.gestureRecognizerService(self, didRecognizeGestures: result, worldLandmarks: result.worldLandmarks)
         }
     }
 }
 
 // MARK: - Delegate Protocol
 protocol GestureRecognizerServiceDelegate: AnyObject {
-    func gestureRecognizerService(_ service: GestureRecognizerService, didRecognizeGestures result: GestureRecognizerResult)
+    func gestureRecognizerService(_ service: GestureRecognizerService, didRecognizeGestures result: GestureRecognizerResult, worldLandmarks: [[Landmark]])
     func gestureRecognizerService(_ service: GestureRecognizerService, didFailWithError error: Error)
 }

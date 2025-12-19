@@ -12,16 +12,19 @@ struct HandLandmarksOverlayView: View {
     let landmarks: [[NormalizedLandmark]]
     let imageSize: CGSize
     let viewSize: CGSize
+    var landmarkErrors: [Float]? = nil
 
     var body: some View {
         GeometryReader { geometry in
             Canvas { context, size in
-                for handLandmarks in landmarks {
+                for (index, handLandmarks) in landmarks.enumerated() {
                     // Draw connections between landmarks
                     drawConnections(context: context, landmarks: handLandmarks)
 
                     // Draw landmark points
-                    drawLandmarks(context: context, landmarks: handLandmarks)
+                    // Only apply errors to the first hand detected for now
+                    let errors = index == 0 ? landmarkErrors : nil
+                    drawLandmarks(context: context, landmarks: handLandmarks, errors: errors)
                 }
             }
         }
@@ -62,22 +65,32 @@ struct HandLandmarksOverlayView: View {
         )
     }
     
-    private func drawLandmarks(context: GraphicsContext, landmarks: [NormalizedLandmark]) {
+    private func drawLandmarks(context: GraphicsContext, landmarks: [NormalizedLandmark], errors: [Float]? = nil) {
         for (index, landmark) in landmarks.enumerated() {
             let point = convertLandmarkToPoint(landmark, index: index)
             
-            // Different colors for different parts of the hand
-            let color: Color = {
-                switch index {
-                case 0: return .red // Wrist
-                case 1...4: return .blue // Thumb
-                case 5...8: return .green // Index
-                case 9...12: return .yellow // Middle
-                case 13...16: return .orange // Ring
-                case 17...20: return .purple // Pinky
-                default: return .white
+            // Determine color based on error if available, otherwise use default coloring
+            let color: Color
+            if let errors = errors, index < errors.count {
+                let error = errors[index]
+                if error < 0.03 {
+                    color = .green
+                } else if error > 0.05 {
+                    color = .red
+                } else {
+                    color = .yellow
                 }
-            }()
+            } else {
+                switch index {
+                case 0: color = .red // Wrist
+                case 1...4: color = .blue // Thumb
+                case 5...8: color = .green // Index
+                case 9...12: color = .yellow // Middle
+                case 13...16: color = .orange // Ring
+                case 17...20: color = .purple // Pinky
+                default: color = .white
+                }
+            }
             
             let circle = Circle()
                 .path(in: CGRect(x: point.x - 8, y: point.y - 8, width: 16, height: 16))
