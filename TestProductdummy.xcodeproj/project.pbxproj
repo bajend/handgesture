@@ -306,6 +306,7 @@
 				DEVELOPMENT_TEAM = ZYYR83V638;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GestureScope;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to perform hand gesture recognition";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -340,6 +341,7 @@
 				DEVELOPMENT_TEAM = ZYYR83V638;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GestureScope;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to perform hand gesture recognition";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
