@@ -15,6 +15,7 @@ struct ContentView: View {
     @StateObject private var viewModel = GestureRecognitionViewModel()
     
     @State private var isDeveloperMode = false
+    @State private var isBlindMode = false
     @State private var showSaveAlert = false
     @State private var showSaveResultAlert = false
     @State private var mudraName = ""
@@ -35,7 +36,7 @@ struct ContentView: View {
                             }
                         
                         // Hand landmarks overlay
-                        if !viewModel.handLandmarks.isEmpty {
+                        if !viewModel.handLandmarks.isEmpty && !isBlindMode {
                             HandLandmarksOverlayView(
                                 landmarks: viewModel.handLandmarks,
                                 imageSize: cameraManager.videoDimensions,
@@ -49,154 +50,219 @@ struct ContentView: View {
                 .ignoresSafeArea()
                 
                 // Sophisticated Overlay Panel
-                VStack {
-                    Spacer()
-                    
-                    VStack(spacing: 12) {
-                        // Header: Target Mudra Selector
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Target: \(viewModel.targetMudraName)")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                
-                                Spacer()
-                                
-                                // Random Test Button
-                                Button(action: {
-                                    if let randomMudra = viewModel.availableMudras.randomElement() {
-                                        viewModel.loadReferenceMudra(named: randomMudra)
-                                    }
-                                }) {
-                                    Image(systemName: "shuffle")
+                if !isBlindMode {
+                    VStack {
+                        Spacer()
+                        
+                        VStack(spacing: 12) {
+                            // Header: Target Mudra Selector
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("Target: \(viewModel.targetMudraName)")
+                                        .font(.headline)
                                         .foregroundColor(.white)
-                                        .padding(8)
-                                        .background(Color.purple.opacity(0.7))
-                                        .clipShape(Circle())
-                                }
-                                .disabled(viewModel.availableMudras.isEmpty)
-                                
-                                // Developer Mode Toggle
-                                Toggle(isOn: $isDeveloperMode) {
-                                    Text("Dev")
-                                        .foregroundColor(.white)
-                                        .font(.caption)
-                                }
-                                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                                .frame(width: 80)
-                            }
-                            
-                            // Horizontal Mudra Selector
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 10) {
-                                    ForEach(Array(viewModel.availableMudras.enumerated()), id: \.element) { index, mudra in
-                                        Button(action: {
-                                            viewModel.loadReferenceMudra(named: mudra)
-                                        }) {
-                                            Text(mudra)
-                                                .font(.caption)
-                                                .fontWeight(.medium)
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 6)
-                                                .background(viewModel.targetMudraName == mudra ? Color.blue : Color.gray.opacity(0.5))
-                                                .foregroundColor(.white)
-                                                .cornerRadius(15)
+                                    
+                                    Spacer()
+                                    
+                                    // Random Test Button
+                                    Button(action: {
+                                        if let randomMudra = viewModel.availableMudras.randomElement() {
+                                            viewModel.loadReferenceMudra(named: randomMudra)
                                         }
-                                        .contextMenu {
-                                            Button(role: .destructive) {
-                                                viewModel.deleteMudra(at: IndexSet(integer: index))
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
+                                    }) {
+                                        Image(systemName: "shuffle")
+                                            .foregroundColor(.white)
+                                            .padding(8)
+                                            .background(Color.purple.opacity(0.7))
+                                            .clipShape(Circle())
+                                    }
+                                    .disabled(viewModel.availableMudras.isEmpty)
+                                    
+                                    // Developer Mode Toggle
+                                    Toggle(isOn: $isDeveloperMode) {
+                                        Text("Dev")
+                                            .foregroundColor(.white)
+                                            .font(.caption)
+                                    }
+                                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                                    .frame(width: 80)
+                                }
+                                
+                                // Horizontal Mudra Selector
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(Array(viewModel.availableMudras.enumerated()), id: \.element) { index, mudra in
+                                            Button(action: {
+                                                viewModel.loadReferenceMudra(named: mudra)
+                                            }) {
+                                                Text(mudra)
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                                    .padding(.horizontal, 12)
+                                                    .padding(.vertical, 6)
+                                                    .background(viewModel.targetMudraName == mudra ? Color.blue : Color.gray.opacity(0.5))
+                                                    .foregroundColor(.white)
+                                                    .cornerRadius(15)
+                                            }
+                                            .contextMenu {
+                                                Button(role: .destructive) {
+                                                    viewModel.deleteMudra(at: IndexSet(integer: index))
+                                                } label: {
+                                                    Label("Delete", systemImage: "trash")
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            .frame(height: 35)
-                        }
-                        
-                        // Accuracy Score
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("Accuracy Score")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                Spacer()
-                                if viewModel.currentLandmarkErrors != nil {
-                                    Text("\(Int(viewModel.accuracyScore * 100))%")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(Color(hue: Double(viewModel.accuracyScore) * 0.3, saturation: 1.0, brightness: 1.0))
-                                }
+                                .frame(height: 35)
                             }
                             
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Rectangle()
-                                        .frame(width: geo.size.width, height: 8)
-                                        .opacity(0.3)
+                            // Accuracy Score
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text("Accuracy Score")
+                                        .font(.caption)
                                         .foregroundColor(.gray)
-                                    
-                                    Rectangle()
-                                        .frame(width: geo.size.width * CGFloat(viewModel.accuracyScore), height: 8)
-                                        .foregroundColor(Color(hue: Double(viewModel.accuracyScore) * 0.3, saturation: 1.0, brightness: 1.0))
+                                    Spacer()
+                                    if viewModel.currentLandmarkErrors != nil {
+                                        Text("\(Int(viewModel.accuracyScore * 100))%")
+                                            .font(.title3)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(Color(hue: Double(viewModel.accuracyScore) * 0.3, saturation: 1.0, brightness: 1.0))
+                                    }
                                 }
-                                .cornerRadius(4)
-                            }
-                            .frame(height: 8)
-                            
-                            Text("\(Int(viewModel.accuracyScore * 100))%")
-                                .font(.caption2)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                        }
-                        
-                        // Stability
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Stability (X)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                Text(String(format: "%.4f", viewModel.stability.x))
-                                    .font(.system(.body, design: .monospaced))
+                                
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        Rectangle()
+                                            .frame(width: geo.size.width, height: 8)
+                                            .opacity(0.3)
+                                            .foregroundColor(.gray)
+                                        
+                                        Rectangle()
+                                            .frame(width: geo.size.width * CGFloat(viewModel.accuracyScore), height: 8)
+                                            .foregroundColor(Color(hue: Double(viewModel.accuracyScore) * 0.3, saturation: 1.0, brightness: 1.0))
+                                    }
+                                    .cornerRadius(4)
+                                }
+                                .frame(height: 8)
+                                
+                                Text("\(Int(viewModel.accuracyScore * 100))%")
+                                    .font(.caption2)
                                     .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
                             }
+                            
+                            // Stability
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text("Stability (X)")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    Text(String(format: "%.4f", viewModel.stability.x))
+                                        .font(.system(.body, design: .monospaced))
+                                        .foregroundColor(.white)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text("Stability (Y)")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    Text(String(format: "%.4f", viewModel.stability.y))
+                                        .font(.system(.body, design: .monospaced))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            
+                            // Developer Controls
+                            if isDeveloperMode {
+                                HStack {
+                                    Button(action: {
+                                        mudraName = ""
+                                        showSaveAlert = true
+                                    }) {
+                                        Text("Save")
+                                            .frame(maxWidth: .infinity)
+                                            .padding(8)
+                                            .background(Color.blue.opacity(0.8))
+                                            .cornerRadius(8)
+                                            .foregroundColor(.white)
+                                    }
+                                    .disabled(viewModel.worldLandmarks.isEmpty)
+                                    
+                                    // Recording Toggle
+                                    Button(action: {
+                                        viewModel.toggleRecording()
+                                    }) {
+                                        HStack {
+                                            Image(systemName: viewModel.isRecordingSession ? "stop.circle.fill" : "record.circle")
+                                            Text(viewModel.isRecordingSession ? "Stop Log" : "Log Data")
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(8)
+                                        .background(viewModel.isRecordingSession ? Color.red.opacity(0.8) : Color.green.opacity(0.8))
+                                        .cornerRadius(8)
+                                        .foregroundColor(.white)
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+                        }
+                        .padding()
+                        .background(Color.black.opacity(0.8))
+                        .cornerRadius(16)
+                        .padding()
+                    }
+                } else {
+                    // Blind Mode UI (Minimal)
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Text("Blind Mode Active")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.red.opacity(0.7))
+                                .cornerRadius(10)
                             
                             Spacer()
                             
-                            VStack(alignment: .trailing) {
-                                Text("Stability (Y)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                Text(String(format: "%.4f", viewModel.stability.y))
-                                    .font(.system(.body, design: .monospaced))
-                                    .foregroundColor(.white)
+                            // Recording Toggle (Visible in Blind Mode for Control)
+                            Button(action: {
+                                viewModel.toggleRecording()
+                            }) {
+                                Image(systemName: viewModel.isRecordingSession ? "stop.circle.fill" : "record.circle")
+                                    .font(.title)
+                                    .foregroundColor(viewModel.isRecordingSession ? .red : .green)
                             }
+                            .padding()
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
                         }
-                        
-                        // Developer Controls
-                        if isDeveloperMode {
-                            HStack {
-                                Button(action: {
-                                    mudraName = ""
-                                    showSaveAlert = true
-                                }) {
-                                    Text("Save")
-                                        .frame(maxWidth: .infinity)
-                                        .padding(8)
-                                        .background(Color.blue.opacity(0.8))
-                                        .cornerRadius(8)
-                                        .foregroundColor(.white)
-                                }
-                                .disabled(viewModel.worldLandmarks.isEmpty)
-                            }
-                            .padding(.top, 8)
-                        }
+                        .padding()
                     }
-                    .padding()
-                    .background(Color.black.opacity(0.8))
-                    .cornerRadius(16)
-                    .padding()
+                }
+                
+                // Global Toggle for Blind Mode (Top Left)
+                VStack {
+                    HStack {
+                        Toggle(isOn: $isBlindMode) {
+                            Text("Blind Mode")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: .red))
+                        .frame(width: 120)
+                        .padding(8)
+                        .background(Color.black.opacity(0.5))
+                        .cornerRadius(8)
+                        .padding()
+                        
+                        Spacer()
+                    }
+                    Spacer()
                 }
             } else {
                 VStack(spacing: 20) {
@@ -293,6 +359,7 @@ class GestureRecognitionViewModel: NSObject, ObservableObject {
     @Published var targetMudraName: String = "None"
     @Published var currentLandmarkErrors: [Float]? = nil
     @Published var availableMudras: [String] = []
+    @Published var isRecordingSession: Bool = false
     
     var viewSize: CGSize = .zero
     weak var cameraManager: CameraManager?
@@ -302,11 +369,21 @@ class GestureRecognitionViewModel: NSObject, ObservableObject {
     private let processingInterval = 33 // Process every 33ms (~30 FPS)
     
     private let tremorAnalyzer = TremorAnalyzer()
+    private let sessionLogger = SessionLogger()
     private var targetMudra: MudraPose?
     
     override init() {
         super.init()
         listSavedMudras()
+    }
+    
+    func toggleRecording() {
+        isRecordingSession.toggle()
+        if isRecordingSession {
+            sessionLogger.startNewSession()
+        } else {
+            sessionLogger.stopSession()
+        }
     }
     
     func setupCameraManager(_ cameraManager: CameraManager) {
@@ -451,6 +528,16 @@ extension GestureRecognitionViewModel: GestureRecognizerServiceDelegate {
                     // This is a heuristic, tune as needed
                     let maxError: Float = 0.2
                     self.accuracyScore = max(0.0, 1.0 - (error / maxError))
+                    
+                    // Log data if recording
+                    if self.isRecordingSession {
+                        self.sessionLogger.logFrame(
+                            timestamp: Date().timeIntervalSince1970,
+                            accuracy: self.accuracyScore,
+                            stabilityX: self.stability.x,
+                            stabilityY: self.stability.y
+                        )
+                    }
                 } else {
                     self.accuracyScore = 0.0
                     self.currentLandmarkErrors = nil
